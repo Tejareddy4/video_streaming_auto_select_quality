@@ -12,7 +12,7 @@ import lombok.*;
 @Builder
 public class Video {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
     private String title;
     private String description;
