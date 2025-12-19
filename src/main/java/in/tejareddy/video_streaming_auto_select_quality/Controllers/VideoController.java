@@ -17,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/videos")
+@CrossOrigin("http://localhost:5173")
 public class VideoController {
 
 
