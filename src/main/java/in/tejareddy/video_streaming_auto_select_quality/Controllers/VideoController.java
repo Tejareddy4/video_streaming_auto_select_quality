@@ -4,14 +4,15 @@ package in.tejareddy.video_streaming_auto_select_quality.Controllers;
 import in.tejareddy.video_streaming_auto_select_quality.Payload.CustomMessage;
 import in.tejareddy.video_streaming_auto_select_quality.Services.VideoService;
 import in.tejareddy.video_streaming_auto_select_quality.entities.Video;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,6 +27,7 @@ public class VideoController {
 
     }
 
+    //upload
     @PostMapping
     public ResponseEntity<?> create(
         @RequestParam("file") MultipartFile file,
@@ -52,6 +54,36 @@ public class VideoController {
                             .build()
                     );
         }
+    }
+
+    //Get all Videos
+    @GetMapping
+    public List<Video> getAll(){
+        return videoService.getAll();
+    }
+
+
+    //Get video stream
+    @GetMapping("/stream/{videoId}")
+    public ResponseEntity<Resource> stream(
+            @PathVariable String videoId
+    ){
+        Video video = videoService.get(videoId);
+
+        String contentType= video.getContentType();
+
+        String filePath = video.getFilePath();
+
+        Resource resource = new FileSystemResource(filePath);
+
+        if(contentType == null){
+            contentType = "application/octet-stream";
+        }
+
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(resource);
     }
 
 
