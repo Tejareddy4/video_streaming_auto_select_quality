@@ -5,13 +5,19 @@ import in.tejareddy.video_streaming_auto_select_quality.Payload.CustomMessage;
 import in.tejareddy.video_streaming_auto_select_quality.Services.VideoService;
 import in.tejareddy.video_streaming_auto_select_quality.entities.Video;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -116,14 +122,46 @@ public class VideoController {
         long rangeStart;
         long rangeEnd;
 
-        range.replace("bytes=","").split("-");
+        String[] ranges=range.replace("bytes=","").split("-");
         rangeStart = Long.parseLong(range);
 
+        if (ranges.length >1){
+            rangeEnd = Long.parseLong(ranges[0]);
+        }else {
+            rangeEnd = fileLength-1;
+        }
+
+        if(rangeEnd >fileLength -1){
+            rangeEnd = fileLength -1;
+        }
+
+        InputStream inputStream;
 
 
+        try {
+            inputStream = Files.newInputStream(path);
+            inputStream.skip(rangeStart);
 
 
-        return null;
+        } catch (IOException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        long contentLength = rangeEnd - rangeStart + 1;
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentLength(contentLength);
+        httpHeaders.add("Content-Range", "bytes " + rangeStart + "-" + rangeEnd + "/" + fileLength);
+        httpHeaders.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        httpHeaders.add("Pragma", "no-cache");
+        httpHeaders.add("Expires", "0");
+        httpHeaders.add("X-Content-Type-Options", "nosniff");
+
+        return ResponseEntity
+                .status(HttpStatus.PARTIAL_CONTENT)
+                .headers(httpHeaders)
+                .contentType(MediaType.parseMediaType(contentType))
+                .body(new InputStreamResource(inputStream)) ;
     }
 
 
