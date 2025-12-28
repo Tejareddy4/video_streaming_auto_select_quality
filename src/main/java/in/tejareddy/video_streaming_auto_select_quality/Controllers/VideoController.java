@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -85,6 +87,43 @@ public class VideoController {
                 .ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
+    }
+
+    @GetMapping("/stream/range/{videoId}")
+    public ResponseEntity<Resource> StreamVideoRange(
+            @PathVariable String videoId,
+            @RequestParam(required = false) String range
+    ){
+        System.out.println(range);
+        Video video = videoService.get(videoId);
+        String contentType = video.getContentType();
+        Path path = Paths.get(video.getFilePath());
+        Resource resource = new FileSystemResource(path);
+        if(contentType == null){
+            contentType = "application/octet-stream";
+        }
+
+        //Total file length
+        long fileLength = path.toFile().length();
+
+        //If the range is null we will return these for the first time and when it is null
+        if(range == null){
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(resource);
+        }
+
+        long rangeStart;
+        long rangeEnd;
+
+        range.replace("bytes=","").split("-");
+        rangeStart = Long.parseLong(range);
+
+
+
+
+
+        return null;
     }
 
 
